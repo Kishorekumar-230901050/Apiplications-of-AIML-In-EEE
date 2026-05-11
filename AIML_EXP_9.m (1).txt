@@ -1,0 +1,28 @@
+Vin=10;
+Vout=5;
+L=1e-3;
+C=10e-6;
+R=0.1;
+num = [Vout*L/R,Vout*(1-R*C/L),0];
+den = [L*C,R*C,1];
+G=tf(num,den);
+num_ants=10;
+num_iterations=50;
+evaporation_rate=0.5;
+alpha=1;
+beta=1;
+pheromones=ones(2,num_iterations);
+for iteration=1:num_iterations
+    for ant = 1:num_ants
+        Kp=rand;
+        Ki=rand;
+        sys=feedback(G,Kp*tf([1,Ki],[1,0]));
+        step_response=stepinfo(sys);
+        performance=alpha*step_response.SettlingTime + beta*step_response.Overshoot;
+        pheromones(:,iteration)=(1-evaporation_rate)*pheromones(:,iteration)+performance;
+    end
+end
+[~,index]=min(pheromones);
+best_Kp=Kp(index);
+best_Ki=Ki(index);
+disp(['Best PI Controller Parameter: Kp=',num2str(best_Kp),'\n,Ki=',num2str(best_Ki)]);
